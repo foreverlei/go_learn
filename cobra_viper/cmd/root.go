@@ -6,12 +6,17 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"learn/cobra_viper/global"
 	"os"
 )
 
-var cfgFile string
+var (
+	cfgFile string
+	author  string
+)
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
@@ -30,7 +35,7 @@ to quickly create a Cobra application.`,
 		if err != nil {
 			fmt.Println("get bool err:", err)
 		}
-		fmt.Println("Root run!", tog, cfgFile)
+		fmt.Println("Root run!", tog, cfgFile, author)
 	},
 }
 
@@ -56,7 +61,9 @@ func init() {
 	// when this action is called directly.
 	// usage: -t=true
 	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
-	fmt.Println("root init:", cfgFile)
+	rootCmd.PersistentFlags().StringVar(&author, "author", "YOUR NAME", "Author name for copyright attribution")
+	viper.BindPFlag("author", rootCmd.PersistentFlags().Lookup("author"))
+	fmt.Println("root init:")
 }
 
 // initConfig reads in config file and ENV variables if set.
@@ -67,19 +74,37 @@ func initConfig() {
 	} else {
 		// Find home directory.
 		//home, err := os.UserHomeDir()
-		home, err := os.Getwd()
-		cobra.CheckErr(err)
+		//home, err := os.Getwd()
+		//cobra.CheckErr(err)
 
 		// Search config in home directory with name ".cobra_viper" (without extension).
-		viper.AddConfigPath(home)
+		//viper.AddConfigPath(home)
+		viper.AddConfigPath(".")
 		viper.SetConfigType("yaml")
-		viper.SetConfigName(".cobra_viper")
+		viper.SetConfigName("cobra_viper")
 	}
 
 	viper.AutomaticEnv() // read in environment variables that match
 
 	// If a config file is found, read it in.
-	if err := viper.ReadInConfig(); err == nil {
-		fmt.Fprintln(os.Stderr, "Using config file:", viper.ConfigFileUsed())
+	err := viper.ReadInConfig() // Find and read the config file
+	if err != nil {             // Handle errors reading the config file
+		panic(fmt.Errorf("Fatal error config file: %w \n", err))
 	}
+	viper.WatchConfig()
+
+	viper.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("config file changed:", e.Name)
+		if err := viper.Unmarshal(&global.Config); err != nil {
+			fmt.Println(err)
+			return
+		}
+		fmt.Println(global.Config.Name, global.Config.Author)
+	})
+	err = viper.Unmarshal(&global.Config)
+	if err != nil {
+		panic("Fatal Unmarshal config file")
+	}
+	fmt.Println(global.Config.Name, global.Config.Author)
+	select {}
 }

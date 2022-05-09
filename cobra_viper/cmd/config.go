@@ -6,6 +6,9 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
+	"learn/cobra_viper/global"
 
 	"github.com/spf13/cobra"
 )
@@ -22,6 +25,7 @@ This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("config called")
+		//innerRun()
 	},
 }
 
@@ -37,4 +41,24 @@ func init() {
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
 	// configCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+}
+
+func innerRun() {
+	v := viper.New()
+	v.SetConfigFile(".")
+	v.SetConfigType("yaml")
+	v.SetConfigName("cobra_viper")
+	err := v.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %s \n", err))
+	}
+	v.WatchConfig()
+
+	v.OnConfigChange(func(e fsnotify.Event) {
+		fmt.Println("config file changed:", e.Name)
+		if err := v.Unmarshal(&global.Config); err != nil {
+			fmt.Println(err)
+		}
+	})
+	fmt.Println(global.Config.Name, global.Config.Author)
 }
