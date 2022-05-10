@@ -1,0 +1,4 @@
+{"level":"info","message":"logger construction succeeded","foo":"bar"}
+{"l":"info","msg":"logger construction succeeded","foo":"bar"}
+2022-05-10T11:59:21.758+0800	INFO	constructed a logger info
+2022-05-10T11:59:21.778+0800	ERROR	constructed a logger error
