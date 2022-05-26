@@ -14,7 +14,7 @@ import (
 import "go.uber.org/zap"
 
 func main() {
-	RotateLogs()
+	//RotateLogs()
 }
 func ExampleTest() {
 	sugar := zap.NewExample().Sugar()
